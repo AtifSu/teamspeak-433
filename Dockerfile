@@ -1,4 +1,16 @@
-FROM teamspeak
+FROM teamspeak:latest
 ENV TS3SERVER_LICENSE=accept
 EXPOSE 443
-CMD sh -c "mkdir -p /tmp/ts3db && ts3server default_voice_port=${PORT:-443} query_port=10011 filetransfer_port=30033 voice_ip=0.0.0.0 dbsqlpath=/opt/ts3server/sql/ dbplugin=ts3db_sqlite3 dbsqlcreatepath=/opt/ts3server/sql/create_sqlite/ dbpath=/tmp/ts3db/"
+
+# Create writable folder for database and logs
+RUN mkdir -p /tmp/ts3server && chmod -R 777 /tmp/ts3server
+
+# Create a simple config file that points to writable paths
+RUN echo "dbplugin=ts3db_sqlite3" > /tmp/ts3server/ts3server.ini && \
+    echo "dbsqlpath=/opt/ts3server/sql/" >> /tmp/ts3server/ts3server.ini && \
+    echo "dbsqlcreatepath=/opt/ts3server/sql/create_sqlite/" >> /tmp/ts3server/ts3server.ini && \
+    echo "dbpluginparameter=/tmp/ts3server/ts3server.sqlitedb" >> /tmp/ts3server/ts3server.ini && \
+    echo "logpath=/tmp/ts3server/logs" >> /tmp/ts3server/ts3server.ini && \
+    echo "default_voice_port=${PORT:-443}" >> /tmp/ts3server/ts3server.ini
+
+CMD ["ts3server", "inifile=/tmp/ts3server/ts3server.ini"]
